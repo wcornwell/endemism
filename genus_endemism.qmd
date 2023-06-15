@@ -1,0 +1,77 @@
+---
+title: "endemism"
+format: html
+editor: visual
+---
+
+## Endemism 
+
+We love endemism
+
+```{r}
+#install packages
+install.packages("tidyr")
+install.packages("tidyverse")
+install.packages("data.table")
+
+#load libraries
+library(tidyr)
+library(tidyverse)
+library(data.table)
+
+#read csvs
+genus_end <- read.csv("data/australian_flora/genus_level_endemism_estimate.csv")
+
+ng <- read.csv("data/other_countries_floras/sa_2022-07-12_072627325-BRAHMSOnlineData.csv")
+nz <- fread("data/other_countries_floras/checklistofthenewzealandflora-seedplantsseptember2020.tsv")
+nz2 <- fread("data/other_countries_floras/checklistofthenewzealandflora-fernsandlycophytesseptember2020.tsv")
+nc <- read.csv("data/other_countries_floras/Florical_vers_7_I_2022.csv")
+indo <- read.csv("data/other_countries_floras/oo_377596.csv")
+
+```
+
+```         
+##Adding NZ Data
+```
+
+```{r}
+#combine nz and nz2 
+nz <- rbind(nz, nz2)
+
+#make new df for genus that are possibly endemic (ie score a 1 on genus_end df)
+ausplants <- subset(genus_end, prop_endemic == 1)
+
+#remove ? from genus column value in nz data
+nz$Genus <- gsub("\\?", "", nz$Genus)
+
+#make a subset for the genus in nz data that appear to have no genus 
+no_genera_nz <- subset(nz, Genus == "")
+nrow(no_genera_nz) #324 - a problem for another day
+
+ausplants$nz <- ausplants$genus %in% nz$Genus
+```
+
+##Adding NC column
+
+```{r}
+ausplants$nc <- ausplants$genus %in% nc$Genre
+```
+
+##Adding NG column
+
+```{r}
+ausplants$ng <- ausplants$genus %in% ng$Genus
+
+```
+
+##Add Indonesian column
+
+```{r}
+ausplants$indo <- ausplants$genus %in% indo$Genus
+```
+
+##Write CSV
+
+```{r}
+write_csv(ausplants,"intermediate_data/wip_endemism.csv")
+```
