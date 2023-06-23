@@ -4,15 +4,13 @@ format: html
 editor: visual
 ---
 
-## Endemism 
+## Endemism
 
 We love endemism
 
 ```{r}
 #install packages
-install.packages("tidyr")
-install.packages("tidyverse")
-install.packages("data.table")
+
 
 #load libraries
 library(tidyr)
@@ -21,6 +19,11 @@ library(data.table)
 
 #read csvs
 genus_end <- read.csv("data/australian_flora/genus_level_endemism_estimate.csv")
+
+wcvp <- fread(file = "data/wcvp/wcvp_names.csv", header = T)
+wcvp_distribution <- fread(file = "data/wcvp/wcvp_distribution.csv", header = T)
+what <- fread(file = "data/wcvp_dwca/wcvp_taxon.csv", header = T)
+
 
 ng <- read.csv("data/other_countries_floras/sa_2022-07-12_072627325-BRAHMSOnlineData.csv")
 nz <- fread("data/other_countries_floras/checklistofthenewzealandflora-seedplantsseptember2020.tsv")
@@ -70,8 +73,35 @@ ausplants$ng <- ausplants$genus %in% ng$Genus
 ausplants$indo <- ausplants$genus %in% indo$Genus
 ```
 
+###Combining WCVP Distribution and the the Other Thingo
+
+```{r}
+wcvp_comb <- wcvp_distribution %>%
+  left_join(wcvp, by = 'plant_name_id') 
+
+wcvp_not_aus <- wcvp_comb %>%
+  filter(region != "Australia") #removing all Australian plants
+
+wcvp_aus <- wcvp_comb %>%
+  filter(region == "Australia")
+
+sort(unique(wcvp_comb$region)) #does not provide country, but general geographic region
+sort(unique(wcvp_aus$area))
+print(wcvp_not_aus[wcvp_not_aus$area == "", ])
+
+
+```
+### Adding WCVP Column
+
+```{r}
+ausplants$wcvp <- ausplants$genus %in% 
+  wcvp_not_aus$genus 
+```
+
 ##Write CSV
 
 ```{r}
 write_csv(ausplants,"intermediate_data/wip_endemism.csv")
 ```
+
+
