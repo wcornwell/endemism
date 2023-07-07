@@ -50,6 +50,7 @@ nz$Genus <- gsub("\\?", "", nz$Genus)
 #make a subset for the genus in nz data that appear to have no genus 
 no_genera_nz <- subset(nz, Genus == "")
 nrow(no_genera_nz) #324 - a problem for another day
+nz<-filter(nz, Origin!="Exotic")
 
 ausplants$nz <- ausplants$genus %in% nz$Genus
 ```
@@ -91,6 +92,7 @@ print(wcvp_not_aus[wcvp_not_aus$area == "", ])
 
 
 ```
+
 ### Adding WCVP Column
 
 ```{r}
@@ -103,5 +105,3 @@ ausplants$wcvp <- ausplants$genus %in%
 ```{r}
 write_csv(ausplants,"intermediate_data/wip_endemism.csv")
 ```
-
-
