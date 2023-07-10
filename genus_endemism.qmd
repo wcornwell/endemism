@@ -22,7 +22,7 @@ genus_end <- read.csv("data/australian_flora/genus_level_endemism_estimate.csv")
 
 wcvp <- fread(file = "data/wcvp/wcvp_names.csv", header = T)
 wcvp_distribution <- fread(file = "data/wcvp/wcvp_distribution.csv", header = T)
-what <- fread(file = "data/wcvp_dwca/wcvp_taxon.csv", header = T)
+#what <- fread(file = "data/wcvp_dwca/wcvp_taxon.csv", header = T)
 
 
 ng <- read.csv("data/other_countries_floras/sa_2022-07-12_072627325-BRAHMSOnlineData.csv")
