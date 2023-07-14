@@ -1,5 +1,4 @@
 "genus","prop_endemic","species_number","nz","nc","ng","wcvp","indo2","prop_aus","n","ala","rowsums","current_knowledge","reason"
 "Amorphospermum","1","1","FALSE","FALSE","FALSE","TRUE","FALSE","1","263","FALSE","1","unclear","records from 1950s, PNG occurence uncertain"
-"Correa","1","11","FALSE","FALSE","FALSE","TRUE","FALSE","0.998355838522354","28586","FALSE","1","unclear","introduced ornamentals in UK"
 "Eucosia","1","1","FALSE","FALSE","FALSE","FALSE","FALSE","0.621621621621622","37","TRUE","1","unclear","endemic based on API class - taxonomic differences in POWO"
 "Harnieria","1","2","FALSE","FALSE","FALSE","FALSE","FALSE","0.989304812834225","561","TRUE","1","unclear","not sure about the taxonomics here - justicia?"
