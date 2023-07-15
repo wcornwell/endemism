@@ -20,9 +20,8 @@ library(data.table)
 #read csvs
 genus_end <- read.csv("data/australian_flora/genus_level_endemism_estimate.csv")
 
-wcvp <- fread(file = "data/wcvp/wcvp_names.csv", header = T)
-wcvp_distribution <- fread(file = "data/wcvp/wcvp_distribution.csv", header = T)
-#what <- fread(file = "data/wcvp_dwca/wcvp_taxon.csv", header = T)
+#wcvp <- fread(file = "data/wcvp/wcvp_names.csv", header = T)
+#wcvp_distribution <- fread(file = "data/wcvp/wcvp_distribution.csv", header = T)
 
 
 ng <- read.csv("data/other_countries_floras/sa_2022-07-12_072627325-BRAHMSOnlineData.csv")
@@ -31,6 +30,9 @@ nz2 <- fread("data/other_countries_floras/checklistofthenewzealandflora-fernsand
 nc <- read.csv("data/other_countries_floras/Florical_vers_7_I_2022.csv")
 indo <- read.csv("data/other_countries_floras/oo_377596.csv")
 
+redlist <- read.csv(file = "data/REDLIST_Folder/simple_summary.csv", header = T)
+
+fivesource <- read.csv(file = "intermediate_data/five_sources_summary.csv", header = T) #Contains outside Aus proportions and endemicity estimates
 ```
 
 ```         
@@ -100,8 +102,58 @@ ausplants$wcvp <- ausplants$genus %in%
   wcvp_not_aus$genus 
 ```
 
-##Write CSV
+### Adding Threatened Status
 
 ```{r}
-write_csv(ausplants,"intermediate_data/wip_endemism.csv")
+library(dplyr)
+library(data.table)
+redlist <- redlist %>%
+  filter(genusName %in% fivesource$genus) #Filters redlist data to only include genera within fivesource data
+
+unique(redlist$redlistCategory) 
+#[1] "Endangered"                 "Critically Endangered"      "Vulnerable"                
+#[4] "Least Concern"              "Near Threatened"            "Lower Risk/near threatened"
+#[7] "Data Deficient"             "Extinct"
+
+print(redlist[redlist$redlistCategory == "Extinct", ]) #Is Extinct required, should remove? 
+
+#redlist <- redlist %>%
+  #filter(redlistCategory != "Extinct")
+
+unique(redlist$genusName) #`182 genera`
+
+counts <- redlist %>% #Creating counts frame for each threatened status
+  group_by(genusName) %>%
+  count(redlistCategory) %>%
+  pivot_wider(names_from = redlistCategory, values_from = n, values_fill = NA) 
+
+# Join the counts with fivesource.trial based on genera2
+genus_with_status <- fivesource %>%
+  left_join(counts, by = c("genus" = "genusName")) %>% #Lower Risk/ Near Threatened has one value - Maybe combine with Near Threatened?
+  mutate_at(c(14:21), ~replace_na(.,0))
+
+#Maybe add proportions??
+```
+
+```{r}
+options(max.print = 10000)
+print(rowSums(genus_with_status[14:21], na.rm = T) > genus_with_status$species_number)
+
+comparison_result <- rowSums(genus_with_status[14:21], na.rm = TRUE) > genus_with_status$species_number
+
+
+print(genus_with_status[comparison_result, ])
+#Arthrotaxis has 2 vulnerable and 1 endangered, with 2 recorded species
+#Genoplesium has one recorded spcies, but has critically endangered and one endangered
+#Polypogon has one species but 2 least-concern
+
+print(redlist[redlist$genusName == "Athrotaxis", ]) #Athrotaxis laxifolia, Athrotaxis cupressoides, Athrotaxis selaginoides
+print(redlist[redlist$genusName == "Genoplesium", ]) #Genoplesium insigne, #Genoplesium baueri 
+print(redlist[redlist$genusName == "Polypogon", ]) #Polypogon viridis, Polypogon monspeliensis
+```
+
+## Write CSV
+
+```{r}
+write_csv(genus_with_status,"intermediate_data/endemism_redlist_status")
 ```
