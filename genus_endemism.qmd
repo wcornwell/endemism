@@ -32,7 +32,7 @@ indo <- read.csv("data/other_countries_floras/oo_377596.csv")
 
 redlist <- read.csv(file = "data/REDLIST_Folder/simple_summary.csv", header = T)
 
-fivesource <- read.csv(file = "intermediate_data/five_sources_summary.csv", header = T) #Contains outside Aus proportions and endemicity estimates
+fivesource <- read.csv(file = "intermediate_data/summary_current.csv", header = T) #Contains outside Aus proportions and endemicity estimates
 ```
 
 ```         
@@ -130,16 +130,18 @@ counts <- redlist %>% #Creating counts frame for each threatened status
 # Join the counts with fivesource.trial based on genera2
 genus_with_status <- fivesource %>%
   left_join(counts, by = c("genus" = "genusName")) %>% #Lower Risk/ Near Threatened has one value - Maybe combine with Near Threatened?
-  mutate_at(c(14:21), ~replace_na(.,0))
+  mutate_at(c(15:22), ~replace_na(.,0))
 
 #Maybe add proportions??
 ```
 
 ```{r}
-options(max.print = 10000)
-print(rowSums(genus_with_status[14:21], na.rm = T) > genus_with_status$species_number)
+genus_with_status$species_number <- as.numeric(genus_with_status$species_number)
 
-comparison_result <- rowSums(genus_with_status[14:21], na.rm = TRUE) > genus_with_status$species_number
+options(max.print = 10000)
+print(rowSums(genus_with_status[15:22], na.rm = T) > genus_with_status$species_number)
+
+comparison_result <- rowSums(genus_with_status[15:22], na.rm = TRUE) > genus_with_status$species_number
 
 
 print(genus_with_status[comparison_result, ])
@@ -155,5 +157,5 @@ print(redlist[redlist$genusName == "Polypogon", ]) #Polypogon viridis, Polypogon
 ## Write CSV
 
 ```{r}
-write_csv(genus_with_status,"intermediate_data/endemism_redlist_status")
+write_csv(genus_with_status,"intermediate_data/summary_current.csv")
 ```
