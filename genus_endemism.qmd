@@ -16,6 +16,7 @@ We love endemism
 library(tidyr)
 library(tidyverse)
 library(data.table)
+library(dplyr)
 
 #read csvs
 genus_end <- read.csv("data/australian_flora/genus_level_endemism_estimate.csv")
@@ -79,6 +80,10 @@ ausplants$indo <- ausplants$genus %in% indo$Genus
 ###Combining WCVP Distribution and the the Other Thingo
 
 ```{r}
+
+wcvp_distribution <- read_csv('data/wcvp/wcvp_distribution.csv')
+wcvp <- read_csv('data/wcvp/wcvp_names.csv')
+
 wcvp_comb <- wcvp_distribution %>%
   left_join(wcvp, by = 'plant_name_id') 
 
@@ -158,4 +163,62 @@ print(redlist[redlist$genusName == "Polypogon", ]) #Polypogon viridis, Polypogon
 
 ```{r}
 write_csv(genus_with_status,"intermediate_data/summary_current.csv")
+```
+
+## Adding Austraits data column - dispersal + growth form traits
+
+```{r}
+install.packages("austraits")
+library(austraits)
+
+
+summary <- read_csv('intermediate_data/summary_current.csv')
+
+#make genus_list of genera included in our summary table
+genus_list <- summary$genus
+
+#load austraits
+devtools::install_github("traitecoevo/austraits")
+austraits <- load_austraits(version = "4.1.0", path = "intro/downloads")
+
+austraits_joined <- left_join(austraits[["traits"]], austraits[["taxa"]], by = "taxon_name")
+
+#find our genera in austraits list
+genus_austraits1 <- austraits_joined[grepl(paste(genus_list, collapse = "|"), austraits_joined$taxon_name), ]
+
+#extract species list from this because species names are the format they are stored in austraits data
+species_list <- unique(genus_austraits1$taxon_name)
+
+#make df with species from species_list 
+austraits_species <- austraits$traits %>%
+  filter(taxon_name %in% species_list)
+
+#add genus column from first word of taxon_name
+austraits_species <- austraits_species %>%
+  mutate(genus = word(taxon_name, 1))
+
+#make genera list where all traits for species in one genera are compiled
+austraits_genera <- austraits_species %>%
+  select(genus, trait_name, value) %>%
+  pivot_wider(names_from = trait_name, values_from = value)
+
+#join to summary list
+summary_with_all_traits <- left_join(summary, austraits_genera, by = 'genus')
+
+#austraits_genera df had 1080 items, but genus_list has 1063?
+genus_in_ausgen <- austraits_genera$genus
+
+non_matching <- genus_in_ausgen[!(genus_in_ausgen %in% summary$genus)]
+print(non_matching) #there are 19 - maybe thats fine? they include orchidaceae and eucalyptus?
+
+#we only want growth form and dispersal traits, so have included dispersal appendage, method, growth form, and seed mass as there was lots of data on that and its relevant to dispesion - and pretty sure there a 2006 cornwell paper somewhere about that...
+
+summary_traits <- summary_with_all_traits[, c(1:22,28,36,42,49)]
+
+#need to convert to characters to save as csv
+summary_traits <- summary_traits %>%
+  mutate(across(where(is.list), as.character))
+
+write.csv(summary_traits, 'intermediate_data/summary_with_traits.csv')
+
 ```
