@@ -71,7 +71,7 @@ unclear$reason[18] <- 'introduced India'
 unclear$current_knowledge[19] <- 'non-endemic'
 unclear$reason[19] <- 'species found in South America'
 
-unclear$current_knowledge[20] <- 'unclear'
+unclear$current_knowledge[20] <- 'endemic'
 unclear$reason[20] <- 'introduced ornamentals in UK'
 
 unclear$current_knowledge[21] <- 'non-endemic'
