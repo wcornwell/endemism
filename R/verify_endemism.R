@@ -24,7 +24,8 @@ unclear$reason[2] <- 'taxonomy error'
 unclear$current_knowledge[3] <- 'endemic' 
 unclear$reason[3] <- 'POWO data error'
 
-unclear$reason[4] <- 'records from 1950s, PNG occurence uncertain'
+unclear$current_knowledge[4] <- 'endemic' 
+unclear$reason[4] <- 'records from 1950s, PNG occurence from NSW Bot Gardens'
 
 unclear$current_knowledge[5] <- 'endemic' 
 unclear$reason[5] <- 'POWO data error'
@@ -95,8 +96,8 @@ unclear$reason[26] <- 'found in PNG POWO taxonomic confusion'
 unclear$current_knowledge[27] <- 'endemic'
 unclear$reason[27] <- 'POWO error'
 
-unclear$current_knowledge[28] <- 'unclear'
-unclear$reason[28] <- 'endemic based on API class - taxonomic differences in POWO'
+unclear$current_knowledge[28] <- 'non-endemic'
+unclear$reason[28] <- 'taxonomic uncertainty'
 
 unclear$current_knowledge[29] <- 'non-endemic'
 unclear$reason[29] <- 'dist in South America'
@@ -116,8 +117,8 @@ unclear$reason[33] <- 'Madagascar distribution'
 unclear$current_knowledge[34] <- 'endemic'
 unclear$reason[34] <- 'introdced to New Zealand - POWO mismatch'
 
-unclear$current_knowledge[35] <- 'unclear'
-unclear$reason[35] <- 'not sure about the taxonomics here - justicia?'
+unclear$current_knowledge[35] <- 'non-endemic'
+unclear$reason[35] <- 'taxonomic confusion - synonym w justicia'
 
 unclear$current_knowledge[36] <- 'endemic'
 unclear$reason[36] <- 'endemic to lord howe - record in NZ?'
@@ -306,8 +307,6 @@ summary_final <- rbind(summary, unclear, by = 'genus', all = TRUE)
 
 summary_final <- summary_final[order(summary_final$genus), ]
 
-unclear1 <- summary_final[summary_final$current_knowledge == 'unclear', ]
 
 write.csv(summary_final, file = 'intermediate_data/summary_current.csv', row.names = FALSE)
 
-write.csv(unclear1, file = 'intermediate_data/unclears_for_will.csv', row.names = F)
