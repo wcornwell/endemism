@@ -165,162 +165,64 @@ print(redlist[redlist$genusName == "Polypogon", ]) #Polypogon viridis, Polypogon
 write_csv(genus_with_status,"intermediate_data/summary_current.csv")
 ```
 
-## Adding Austraits data column - dispersal + growth form traits
+## Adding Austraits data - dispersal + growth form traits - for ALL australian genera
 
 ```{r}
-install.packages("austraits")
-library(austraits)
+##create df with all australian genera for comparison
 
+aus_genera <- read_csv('data/australian_flora/genus_level_endemism_estimate.csv')
 
-summary <- read_csv('intermediate_data/summary_current.csv')
+ausplants <- read_csv('intermediate_data/summary_current')
 
-#make genus_list of genera included in our summary table
-genus_list <- summary$genus
+#create non-endemic subset where proportion endemic aus species was <1 (from 2022 Big Data Project)
+non_end <- subset(aus_genera, prop_endemic < 1)
+
+#create endemism classification column
+non_end$endemism_status <- 'non-endemic'
+
+all_aus_genera <- rbind(non_end[ , c(1,4)], ausplants[ , c(1,13)])
+
 
 #load austraits
 devtools::install_github("traitecoevo/austraits")
 austraits <- load_austraits(version = "4.1.0", path = "intro/downloads")
 
-austraits_joined <- left_join(austraits[["traits"]], austraits[["taxa"]], by = "taxon_name")
+#make genus_list from our australian genera df
+genus_list <- all_aus_genera$genus
 
-#find our genera in austraits list
-genus_austraits1 <- austraits_joined[grepl(paste(genus_list, collapse = "|"), austraits_joined$taxon_name), ]
+#now select the categorical traits we want to extract - dispersal appendage, syndrome, plant growth form using the extract_trait function
+cat_traits <- austraits %>% extract_trait(c('dispersal_appendage', 'dispersal_syndrome', 'plant_growth_form'))
 
-#extract species list from this because species names are the format they are stored in austraits data
-species_list <- unique(genus_austraits1$taxon_name)
+#join traits to produce dataframe 
+cat_traits_joined <- left_join(cat_traits[["traits"]], cat_traits[["taxa"]], by = "taxon_name")
 
-#make df with species from species_list 
-austraits_species <- austraits$traits %>%
-  filter(taxon_name %in% species_list)
+#keep only records for genera on our australian genera list
+cat_traits_joined <- cat_traits_joined[cat_traits_joined$genus %in% genus_list, ]
 
-#add genus column from first word of taxon_name
-austraits_species <- austraits_species %>%
-  mutate(genus = word(taxon_name, 1))
-
-#make genera list where all traits for species in one genera are compiled
-austraits_genera <- austraits_species %>%
+#pivot df such that each row is a genus from the australian genera list, and the most commonly recorded plant growth, dispersal appendage, dispersal syndrome traits are applied for each genus
+austraits_genera <- cat_traits_joined %>%
   select(genus, trait_name, value) %>%
-  pivot_wider(names_from = trait_name, values_from = value)
+  pivot_wider(names_from = trait_name, values_from = value, values_fn = max)
 
-#join to summary list
-summary_with_all_traits <- left_join(summary, austraits_genera, by = 'genus')
+#now the same for seed_traits
+seed_traits <- austraits %>% extract_trait(c('seed_dry_mass'))
 
-#austraits_genera df had 1080 items, but genus_list has 1063?
-genus_in_ausgen <- austraits_genera$genus
+#seed traits joined
+seed_traits_joined <- left_join(seed_traits[["traits"]], seed_traits[["taxa"]], by = "taxon_name")
 
-non_matching <- genus_in_ausgen[!(genus_in_ausgen %in% summary$genus)]
-print(non_matching) #there are 19 - maybe thats fine? they include orchidaceae and eucalyptus?
+#keep only records for genera on our australian genera list
+seed_traits_joined <- seed_traits_joined[seed_traits_joined$genus %in% genus_list, ]
 
-#we only want growth form and dispersal traits, so have included dispersal appendage, method, growth form, and seed mass as there was lots of data on that and its relevant to dispesion - and pretty sure there a 2006 cornwell paper somewhere about that...
-
-summary_traits <- summary_with_all_traits[, c(1:22,28,36,42,49)]
-
-#need to convert to characters to save as csv
-summary_traits <- summary_traits %>%
-  mutate(across(where(is.list), as.character))
-
-write.csv(summary_traits, 'intermediate_data/summary_with_traits.csv')
-
-summary_traits <- read_csv('intermediate_data/summary_with_traits.csv')
-
-#get rid of first column which is just row numbers
-summary_traits <- summary_traits[, -1]
-```
-
-```{r}
-all_aus_gen <- read_csv('data/australian_flora/genus_level_endemism_estimate.csv')
-
-colnames(summary_traits)
-
-all_aus_gen$nz <- NA
-all_aus_gen$nc <- NA
-all_aus_gen$ng <- NA
-all_aus_gen$wcvp <- NA
-all_aus_gen$indo2 <- NA
-all_aus_gen$prop_aus <- NA
-all_aus_gen$n <- NA
-all_aus_gen$ala <- NA
-all_aus_gen$rowsums <- NA
-all_aus_gen$current_knowledge <- 'non-endemic'
-all_aus_gen$reason <- NA
-
-
-#remove dupes from summary_traits df because we are going to join them later
-non_end_gen <- all_aus_gen[!(all_aus_gen$genus %in% summary_traits$genus), ]
-
-redlist <- read.csv(file = "data/REDLIST_Folder/simple_summary.csv", header = T)
-
-redlist <- redlist %>%
-  filter(genusName %in% non_end_gen$genus) #Filters redlist data to only include genera within fivesource data
-
-unique(redlist$redlistCategory) 
-#[1] "Least Concern"                     "Near Threatened"                   "Vulnerable"                        "Endangered"                        "Lower Risk/near threatened"       
-#[6] "Lower Risk/conservation dependent" "Data Deficient"                    "Critically Endangered"             "Extinct"  
-
-print(redlist[redlist$redlistCategory == "Extinct", ]) #Is Extinct required, should remove? 
-
-#redlist <- redlist %>%
-  #filter(redlistCategory != "Extinct")
-
-unique(redlist$genusName) #325 genera`
-
-counts <- redlist %>% #Creating counts frame for each threatened status
-  group_by(genusName) %>%
-  count(redlistCategory) %>%
-  pivot_wider(names_from = redlistCategory, values_from = n, values_fill = NA) 
-
-# Join the counts with all_aud_gen based on genera2
-non_end_gen <- non_end_gen %>%
-  left_join(counts, by = c("genus" = "genusName")) %>% #Lower Risk/ Near Threatened has one value - Maybe combine with Near Threatened?
-  mutate_at(c(15:23), ~replace_na(.,0))
-
-```
-
-Now add austraits
-
-```{r}
-
-austraits_joined <- left_join(austraits[["traits"]], austraits[["taxa"]], by = "taxon_name")
-
-non_end_genera_list <- non_end_gen$genus
-  
-#find our genera in austraits list
-genus_austraits2 <- austraits_joined[grepl(paste(non_end_genera_list, collapse = "|"), austraits_joined$taxon_name), ]
-
-#extract species list from this because species names are the format they are stored in austraits data
-non_end_species_list <- unique(genus_austraits2$taxon_name)
-
-#make df with species from species_list 
-non_end_austraits_species <- austraits$traits %>%
-  filter(taxon_name %in% non_end_species_list)
-
-#add genus column from first word of taxon_name
-non_end_austraits_species <- non_end_austraits_species %>%
-  mutate(genus = word(taxon_name, 1))
-
-#make genera list where all traits for species in one genera are compiled
-non_end_austraits_genera <- non_end_austraits_species %>%
+#pivot df such that each row is a genus from the australian genera list, and the mean of recorded dry_seed_mass are applied for each genus
+seed_genera <- seed_traits_joined %>%
   select(genus, trait_name, value) %>%
-  pivot_wider(names_from = trait_name, values_from = value)
-
-#join to summary list
-ne_summary <- left_join(non_end_gen, non_end_austraits_genera, by = 'genus')
-
-#austraits_genera df had 1080 items, but genus_list has 1063?
-genus_in_ausgen <- non_end_austraits_genera$genus
-
-non_matching <- genus_in_ausgen[!(genus_in_ausgen %in% ne_summary$genus)]
-print(non_matching) #there are 18 - ???
-
-#we only want growth form and dispersal traits, so have included dispersal appendage, method, growth form, and seed mass as there was lots of data on that and its relevant to dispesion - and pretty sure there a 2006 cornwell paper somewhere about that...
+  pivot_wider(names_from = trait_name, values_from = value, values_fn = mean)
 
 
-which(colnames(ne_summary) == "dispersal_syndrome")
+#add categorical traits and numerical seed mass traits together
+austraits_genera <- left_join(austraits_genera, seed_genera, by = 'genus')
 
-ne_summary_traits <- ne_summary[, c(1:23,26,37,52,56)]
-
-
-#can't join because ne_summary_traits has an extra column to summary_traits - problem for another day?
+write_csv(austraits_genera, 'intermediate_data/all_gen_with_traits.csv')
 
 
 ```
