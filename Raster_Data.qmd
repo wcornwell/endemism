@@ -1,0 +1,45 @@
+---
+title: "Raster_Data"
+format: html
+editor: visual
+---
+Packages
+```{r}
+#install.packages("raster")
+#install.packages("sf")
+library(raster)
+library(sf)
+```
+
+Reprojecting and extracting
+```{r}
+WGS <- CRS("+proj=longlat +datum=WGS84")
+mvg_raster <- projectRaster(mvg_raster, crs = WGS, method = "ngb")
+projection(mvg_raster)
+
+coordinates_only <- locations_endemic[, c(1, 2)]
+extracted_values <- extract(mvg_raster, coordinates_only, cellnumbers = TRUE)
+locations_with_mvg <- cbind(locations_endemic, extracted_values)
+locations_with_mvg$extracted_values <- round(locations_with_mvg$extracted_values)
+unique(locations_with_mvg$MVG_Raster) #the unique values should be 1-32 and 99
+```
+
+Analysis
+```{r}
+print(chisq.test(Endemic_MVG$genus, Endemic_MVG$MVG_Raster, correct = FALSE)) #There are still unclears in this dataset so need to fix those
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+Groups <- group_by(locations_with_mvg, MVG_Raster) %>%
+  summarise(count = n())
+print(Groups)
+
+ggplot(Groups, aes(MVG_Raster, count, color = MVG_Raster)) + 
+  geom_point() +
+  theme_linedraw() +
+  scale_colour_identity()
+```
+
