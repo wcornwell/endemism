@@ -169,11 +169,301 @@ write_csv(genus_with_status,"intermediate_data/summary_current.csv")
 ## Adding Austraits data - dispersal + growth form traits - for ALL australian genera
 
 ```{r}
+
+ausplants <- read_csv('intermediate_data/five_sources_summary.csv')
+
+#create new df with only 'unclear' genera
+unclear <- ausplants[ausplants$current_knowledge == 'unclear', ]
+
+#add reason column, to denote reason for confirming endemic/non-endemic status
+unclear$reason <- NA
+
+#add endemism status with reason for uncertainty/assessment
+unclear$current_knowledge[1] <- 'endemic' 
+unclear$reason[1] <- 'ALA taxonomy error'
+
+unclear$current_knowledge[2] <- 'non-endemic' 
+unclear$reason[2] <- 'taxonomy error'
+
+unclear$current_knowledge[3] <- 'endemic' 
+unclear$reason[3] <- 'POWO data error'
+
+unclear$current_knowledge[4] <- 'endemic' 
+unclear$reason[4] <- 'records from 1950s, PNG occurence from NSW Bot Gardens'
+
+unclear$current_knowledge[5] <- 'endemic' 
+unclear$reason[5] <- 'POWO data error'
+
+unclear$current_knowledge[6] <- 'endemic'
+unclear$reason[6] <- 'Indo data error'
+
+unclear$current_knowledge[7] <- 'endemic'
+unclear$reason[7] <- 'POWO data error'
+
+unclear$current_knowledge[8] <- 'non-endemic'
+unclear$reason[8] <- 'NC occurence'
+
+unclear$current_knowledge[9] <- 'non-endemic'
+unclear$reason[9] <- 'taxonomic error - synonym Machaerina used'
+
+unclear$current_knowledge[10] <- 'non-endemic'
+unclear$reason[10] <- 'PNG native'
+
+unclear$current_knowledge[11] <- 'endemic'
+unclear$reason[11] <- 'ALA data/shapefile error'
+
+unclear$current_knowledge[12] <- 'endemic'
+unclear$reason[12] <- 'ALA data/shapefile error'
+
+unclear$current_knowledge[13] <- 'endemic'
+unclear$reason[13] <- 'ornamental plant in UK'
+
+unclear$current_knowledge[14] <- 'endemic'
+unclear$reason[14] <- 'taxonomic uncertainty - WCVP says 4 species, zimbabwe flora mentions only 1 accepted species'
+
+unclear$current_knowledge[15] <- 'endemic'
+unclear$reason[15] <- 'ng data error'
+
+unclear$current_knowledge[16] <- 'non-endemic'
+unclear$reason[16] <- 'taxonomy error, NZ species'
+
+unclear$current_knowledge[17] <- 'endemic'
+unclear$reason[17] <- 'introduced NZ and California'
+
+unclear$current_knowledge[18] <- 'endemic'
+unclear$reason[18] <- 'introduced India'
+
+unclear$current_knowledge[19] <- 'non-endemic'
+unclear$reason[19] <- 'species found in South America'
+
+unclear$current_knowledge[20] <- 'endemic'
+unclear$reason[20] <- 'introduced ornamentals in UK'
+
+unclear$current_knowledge[21] <- 'non-endemic'
+unclear$reason[21] <- 'species found in Africa, Americas, South Asia etc'
+
+unclear$current_knowledge[22] <- 'endemic'
+unclear$reason[22] <- 'taxonomic confusion, tasmania only'
+
+unclear$current_knowledge[23] <- 'non-endemic'
+unclear$reason[23] <- 'species found in Africa, Americas, South Asia etc'
+
+unclear$current_knowledge[24] <- 'endemic'
+unclear$reason[24] <- 'taxonomic error in indo data'
+
+unclear$current_knowledge[25] <- 'non-endemic'
+unclear$reason[25] <- 'found in americas'
+
+unclear$current_knowledge[26] <- 'non-endemic'
+unclear$reason[26] <- 'found in PNG POWO taxonomic confusion'
+
+unclear$current_knowledge[27] <- 'endemic'
+unclear$reason[27] <- 'POWO error'
+
+unclear$current_knowledge[28] <- 'non-endemic'
+unclear$reason[28] <- 'taxonomic uncertainty'
+
+unclear$current_knowledge[29] <- 'non-endemic'
+unclear$reason[29] <- 'dist in South America'
+
+unclear$current_knowledge[30] <- 'non-endemic'
+unclear$reason[30] <- 'dist in PNG'
+
+unclear$current_knowledge[31] <- 'endemic'
+unclear$reason[31] <- 'introdced to india - POWO mismatch'
+
+unclear$current_knowledge[32] <- 'endemic'
+unclear$reason[32] <- 'ALA error (Georgiella species entered as Georgeantha'
+
+unclear$current_knowledge[33] <- 'non-endemic'
+unclear$reason[33] <- 'Madagascar distribution'
+
+unclear$current_knowledge[34] <- 'endemic'
+unclear$reason[34] <- 'introdced to New Zealand - POWO mismatch'
+
+unclear$current_knowledge[35] <- 'non-endemic'
+unclear$reason[35] <- 'taxonomic confusion - synonym w justicia'
+
+unclear$current_knowledge[36] <- 'endemic'
+unclear$reason[36] <- 'endemic to lord howe - record in NZ?'
+
+unclear$current_knowledge[37] <- 'endemic'
+unclear$reason[37] <- 'taxonomic confusion - unplaced in POWO'
+
+unclear$current_knowledge[38] <- 'endemic'
+unclear$reason[38] <- 'ALA data error'
+
+unclear$current_knowledge[39] <- 'endemic'
+unclear$reason[39] <- 'ALA data error'
+
+unclear$current_knowledge[40] <- 'non-endemic'
+unclear$reason[40] <- 'distribution in Chile'
+
+unclear$current_knowledge[41] <- 'endemic'
+unclear$reason[41] <- 'ALA data error'
+
+unclear$current_knowledge[42] <- 'non-endemic'
+unclear$reason[42] <- 'species found in Africa, Asia, Australia'
+
+unclear$current_knowledge[43] <- 'endemic'
+unclear$reason[43] <- 'Indo data error'
+
+unclear$current_knowledge[44] <- 'non-endemic'
+unclear$reason[44] <- 'species endemic to Norfolk Island'
+
+unclear$current_knowledge[45] <- 'endemic'
+unclear$reason[45] <- 'introduced to NZ and India'
+
+unclear$current_knowledge[46] <- 'endemic'
+unclear$reason[46] <- 'ALA data error'
+
+unclear$current_knowledge[47] <- 'endemic'
+unclear$reason[47] <- 'ALA data error'
+
+unclear$current_knowledge[48] <- 'endemic'
+unclear$reason[48] <- 'introduced to India'
+
+unclear$current_knowledge[49] <- 'endemic'
+unclear$reason[49] <- 'introduced to Czechia'
+
+unclear$current_knowledge[50] <- 'non-endemic'
+unclear$reason[50] <- 'species found in Americas and Australia'
+
+unclear$current_knowledge[51] <- 'non-endemic'
+unclear$reason[51] <- 'species found in Europe, Africa, Asia, Australia'
+
+unclear$current_knowledge[52] <- 'endemic'
+unclear$reason[52] <- 'WVCP data error'
+
+unclear$current_knowledge[53] <- 'endemic'
+unclear$reason[53] <- 'ALA data error'
+
+unclear$current_knowledge[54] <- 'endemic'
+unclear$reason[54] <- 'introduced to Great Britain'
+
+unclear$current_knowledge[55] <- 'endemic'
+unclear$reason[55] <- 'introduced to Great Britain'
+
+unclear$current_knowledge[56] <- 'non-endemic'
+unclear$reason[56] <- 'synonym for Ochrosia, found across SE & E asia' #Neisosperma
+
+unclear$current_knowledge[57] <- 'non-endemic'
+unclear$reason[57] <- 'synonym for Apostasia, found in SE Asia' #Niemeyera
+
+unclear$current_knowledge[58] <- 'endemic'
+unclear$reason[58] <- 'Limited PNG occurrence - introduced, flagged as basis of record invalid' #Oraniopsis
+
+unclear$current_knowledge[59] <- 'non-endemic'
+unclear$reason[59] <- 'Known to be native to Bolivia and Chile' #Orites
+
+unclear$current_knowledge[60] <- 'non-endemic'
+unclear$reason[60] <- 'Known to be native to Mexico and South America' #Orthrosanthus
+
+unclear$current_knowledge[61] <- 'non-endemic'
+unclear$reason[61] <- 'Cosmopolitan genera - synonym: Hemionitis' #Paraceterach
+
+unclear$current_knowledge[62] <- 'endemic'
+unclear$reason[62] <- 'Data error - single preserved specimen from PNG' #Peripentadenia
+
+unclear$current_knowledge[63] <- 'non-endemic'
+unclear$reason[63] <- 'synonym for Arthrochilus- single sp. in PNG' #Phoringopsis
+
+unclear$current_knowledge[64] <- 'non-endemic'
+unclear$reason[64] <- 'synonym for Phreatia' #Plexaure
+
+unclear$current_knowledge[65] <- 'non-endemic'
+unclear$reason[65] <- 'synonym for Caltha' #Psychrophila
+
+unclear$current_knowledge[66] <- 'endemic'
+unclear$reason[66] <- 'WCVP Data error - single 200 year old record in NZ' #Pyrorchis
+
+unclear$current_knowledge[67] <- 'endemic'
+unclear$reason[67] <- 'Data duplication of incorrect point' #Rhinerrhiza
+
+unclear$current_knowledge[68] <- 'non-endemic'
+unclear$reason[68] <- 'synonym for Phreatia' #Rhipidorchis
+
+unclear$current_knowledge[69] <- 'endemic'
+unclear$reason[69] <- 'Introduced and grown as an ornamental' #Rhodanthe
+
+unclear$current_knowledge[70] <- 'endemic'
+unclear$reason[70] <- 'Introduced into NZ, UK, & USA' #Rumicastrum
+
+unclear$current_knowledge[71] <- 'non-endemic'
+unclear$reason[71] <- 'Synonym with Goodenia'
+
+unclear$current_knowledge[72] <- 'endemic'
+unclear$reason[72] <- 'wcvp incorrect, found in PNG'
+
+unclear$current_knowledge[73] <- 'endemic'
+unclear$reason[73] <- 'Taxonomy mix up'
+
+unclear$current_knowledge[74] <- 'non-endemic'
+unclear$reason[74] <- 'Found in PNG and Malaysia as well'
+
+unclear$current_knowledge[75] <- 'non-endemic'
+unclear$reason[75] <- 'Synonym with Brachypterum, found in southern Asia'
+
+unclear$current_knowledge[76] <- 'endemic'
+unclear$reason[76] <- 'Outlier in Indo data, only one point'
+
+unclear$current_knowledge[77] <- 'endemic'
+unclear$reason[77] <- 'Introduced to Britain'
+
+unclear$current_knowledge[78] <- 'endemic'
+unclear$reason[78] <- 'Small numbers outside, botanical gardens'
+
+unclear$current_knowledge[79] <- 'non-endemic'
+unclear$reason[79] <- 'Synonym with Aleurites'
+
+unclear$current_knowledge[80] <- 'non-endemic'
+unclear$reason[80] <- 'Synonym with Ardisia'
+
+unclear$current_knowledge[81] <- 'non-endemic'
+unclear$reason[81] <- 'Found in South America as well'
+
+unclear$current_knowledge[82] <- 'endemic'
+unclear$reason[82] <- 'Error in occurrence data, single occurrences outside Australia (oriental/botanical gardens)'
+
+unclear$current_knowledge[83] <- 'endemic'
+unclear$reason[83] <- 'taxonomic within genus'
+
+unclear$current_knowledge[84] <- 'non-endemic'
+unclear$reason[84] <- 'Native to US and found else where in the world'
+
+unclear$current_knowledge[85] <- 'non-endemic'
+unclear$reason[85] <- 'Found in NZ, ALA incorrect'
+
+unclear$current_knowledge[86] <- 'non-endemic'
+unclear$reason[86] <- 'Found in New Caledonia and Papua New Guinea'
+
+unclear$current_knowledge[87] <- 'non-endemic'
+unclear$reason[87] <- 'Found in Myanmar'
+
+#remove unclears from ausplants df
+ausplants <- ausplants[ausplants$current_knowledge != "unclear", ]
+
+#add back now classified 'unclear' genera
+ausplants <- rbind(ausplants, unclear[1:13])
+
+#order alphabetically
+ausplants <- ausplants[order(ausplants$genus), ]
+
+#rename current_knowlege column to endemism_status
+colnames(ausplants)[colnames(ausplants) == 'current_knowledge'] <- 'endemism_status'
+
+
+write.csv(ausplants, 'intermediate_data/summary_endemism.csv')
+```
+
+```{r}
 ##create df with all australian genera for comparison
+
+library(austraits)
 
 aus_genera <- read_csv('data/australian_flora/genus_level_endemism_estimate.csv')
 
-ausplants <- read_csv('intermediate_data/summary_current.csv')
+ausplants <- read_csv('intermediate_data/summary_endemism.csv')
 
 #create non-endemic subset where proportion endemic aus species was <1 (from 2022 Big Data Project)
 non_end <- subset(aus_genera, prop_endemic < 1)
@@ -181,15 +471,15 @@ non_end <- subset(aus_genera, prop_endemic < 1)
 #create endemism classification column
 non_end$endemism_status <- 'non-endemic'
 
-all_aus_genera <- rbind(non_end[ , c(1,4)], ausplants[ , c(1,13)])
 
+ausplants <- rbind(non_end[ , c(1,4)], ausplants[ , c(1,13)])
 
 #load austraits
 devtools::install_github("traitecoevo/austraits")
 austraits <- load_austraits(version = "4.1.0", path = "intro/downloads")
 
 #make genus_list from our australian genera df
-genus_list <- all_aus_genera$genus
+genus_list <- ausplants$genus
 
 #now select the categorical traits we want to extract - dispersal appendage, syndrome, plant growth form using the extract_trait function
 cat_traits <- austraits %>% extract_trait(c('dispersal_appendage', 'dispersal_syndrome', 'plant_growth_form'))
@@ -235,7 +525,7 @@ wilcox rank sum tests for plant height and seed mass
 austraits_genera <- read_csv('intermediate_data/all_gen_with_traits.csv')
 
 #adding the endemism status to this dataframe for subsequent plotting and tests
-genera <- merge(austraits_genera, all[1:2], by = 'genus', all.x = TRUE)
+genera <- merge(austraits_genera, ausplants[ , c(1,2)], by = 'genus', all.x = TRUE)
 
 
 library(rstatix)
@@ -249,7 +539,7 @@ seed_test #p < 0.0.000733, significant
 height_test <- genera %>% 
   wilcox_test(plant_height ~ endemism_status) %>%
   add_significance()
-seed_test #p < 0.0.0005, significant
+height_test #p < 0.0.0005, significant
 
 ```
 
@@ -257,37 +547,51 @@ Seed mass plots
 
 ```{r}
 #plotting of seed_dry_mass - violin plot w boxplot
-ggplot(genera, aes(x = endemism_status, y = seed_dry_mass_log, fill = endemism_status)) +
+violin_seed <- ggplot(genera, aes(x = endemism_status, y = seed_dry_mass, fill = endemism_status)) +
   geom_violin() +
   scale_fill_brewer() +
-  labs(fill = 'Endemic status', x = 'Endemic status', y = 'Seed dry mass (log)') + 
-  theme_bw()  +
+  labs(fill = 'Endemic status', x = 'Endemic status', y = 'log dry seed mass (mg)', title = 'Mean seed mass of endemic and non-endemic genera') + 
+  theme_bw() +
+  #scale_y_log10() +
+  scale_y_log10(labels = function(x) sprintf("%.2f", x)) +
   geom_boxplot(width=0.05) 
 
+violin_seed
+
+ggsave('violin_seed.png', violin_seed, width = 7, height = 5)
+
 #plotting of seed_dry_mass - boxplot
-ggplot(genera, aes(x = endemism_status, y = seed_dry_mass_log, fill = endemism_status)) +
+ggplot(genera, aes(x = endemism_status, y = seed_dry_mass, fill = endemism_status)) +
   geom_boxplot() +
   scale_fill_brewer() +
-  labs(fill = 'Endemic status', x = 'Endemic status', y = 'Seed dry mass (log)') + 
+  labs(fill = 'Endemic status', x = 'Endemic status', y = 'log dry seed mass (mg)') + scale_y_continuous(labels = scales::number_format(scale = 1e05))+ 
   theme_bw()  
+
+
 ```
 
 Plant height plots
 
 ```{r}
 #plant height plots - violin w boxplot
-ggplot(genera, aes(x = endemism_status, y = plant_height, fill = endemism_status)) +
+violin_height <- ggplot(genera, aes(x = endemism_status, y = plant_height, fill = endemism_status)) +
   geom_violin() +
   scale_fill_brewer() +
-  labs(fill = 'Endemic status', x = 'Endemic status', y = 'plant height (cm)') + 
+  labs(title = 'Mean plant height of endemic and non-endemic genera', fill = 'Endemic status', x = 'Endemic status', y = 'log plant height (cm)') + 
   theme_bw()  +
+  scale_y_log10() +
   geom_boxplot(width=0.05) 
+
+violin_height
+
+ggsave('violin_height.png', violin_height, width = 7, height = 5)
 
 #plant height plots - boxplot
 ggplot(genera, aes(x = endemism_status, y = plant_height, fill = endemism_status)) +
   geom_boxplot() +
   scale_fill_brewer() +
-  labs(fill = 'Endemic status', x = 'Endemic status', y = 'plant height (cm)') + 
+    scale_y_log10() +
+  labs(title = 'Plant height (log) of endemic and non-endemic genera', fill = 'Endemic status', x = 'Endemic status', y = 'plant height (cm)') + 
   theme_bw() 
 ```
 
@@ -312,6 +616,7 @@ genera <- genera %>%
     TRUE ~ plant_growth_form
   ))
 
+
 #calculating proportion of each simplified growth form
 proportions_data <- genera %>%
   group_by(endemism_status, growth_form_simp) %>%
@@ -323,12 +628,16 @@ proportions_data <- genera %>%
 proportions  <- proportions_data  %>%
   filter(!(growth_form_simp %in% c("palmoid", "lycophyte", "graminoid")))
 
-#plotting growth forms as a proportion of total number of endemic and non-endemic genera
 
-ggplot(proportions, aes(x = endemism_status, y = proportion, fill = growth_form_simp)) +
+growth_bar <- ggplot(proportions, aes(x = endemism_status, y = proportion, fill = growth_form_simp)) +
   geom_bar(stat = "identity") +
-  labs(x = "Endemism Status", y = "Proportion of genera", title = "Plant growth forms of endemic and non-endemic genera", fill = 'Simplified growth form') +
-  theme_bw() 
+  labs(x = "Endemism Status", y = "Proportion of genera", title = "Plant growth forms of endemic and non-endemic genera", fill = 'Plant growth form') +
+  theme_bw() +
+  scale_fill_brewer(palette = "Spectral")
+
+growth_bar 
+
+ggsave('growth_form_bar.png', growth_bar, width = 7, height = 5)
 ```
 
 Chi square test for plant growth form
@@ -340,81 +649,66 @@ cont_form <- table(genera$endemism_status, genera$growth_form_simp)
 #chi square test
 chi <- chisq.test(cont_form, correct = F)
 
-# calculate the Pearson residuals
-residuals <- stats::residuals(chi, type = "pearson")
+
+```
+
+```{r}
+
+#calculating proportion of each simplified growth form
+proportions_threat <- all %>%
+  group_by(endemism_status, growth_form_simp) %>%
+  summarize(count = n()) %>%
+  group_by(endemism_status) %>%
+  mutate(proportion = count / sum(count))
+
+#remove graminoids, lycophyte, palmoids for plotting as these contain ~1 species 
+proportions  <- proportions_data  %>%
+  filter(!(growth_form_simp %in% c("palmoid", "lycophyte", "graminoid")))
 
 
-# Set the significance threshold
-threshold <- 1.96
+growth_bar <- ggplot(proportions, aes(x = endemism_status, y = proportion, fill = growth_form_simp)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Endemism Status", y = "Proportion of genera", title = "Plant growth forms of endemic and non-endemic genera", fill = 'Simplified growth form') +
+  theme_bw() +
+  scale_fill_brewer(palette = "Set2")
 
-# Identify significant deviations
-significant_deviations <- abs(residuals) > threshold
+growth_bar 
 
-significant_cells <- which(significant_deviations, arr.ind = TRUE)
-significant_cells
-#            row col
-#endemic       1   2
-#non-endemic   2   2
-#endemic       1   3
-#non-endemic   2   3
+ggsave('intermediate_data/growth_form_bar.png')
+```
 
-# Set the significance level (alpha) before correction
-alpha <- 0.05
+```{r}
+threat_all <- all %>%
+  pivot_longer(cols = c("Least Concern", "Critically Endangered", "Endangered",
+                        "Near Threatened", "Vulnerable", "Data Deficient", "Lower Risk"),
+               names_to = "threat_status",
+               values_to = "count") %>%
+  select(endemism_status, threat_status, count)
 
-# Calculate the adjusted significance threshold
-num_comparisons <- ncol(cont_form) - 1  # Exclude the 'Endemic' and 'Non-endemic' columns
-adjusted_threshold <- alpha / num_comparisons
+threat_all <- all %>%
+  group_by(endemism_status) %>%
+  summarize(across(matches("Least Concern|Critically Endangered|Endangered|Near Threatened|Vulnerable|Data Deficient|Lower Risk"), sum, na.rm = TRUE)) %>%
+  pivot_longer(cols = matches("Least Concern|Critically Endangered|Endangered|Near Threatened|Vulnerable|Data Deficient|Lower Risk"),
+               names_to = "threat_status",
+               values_to = "count")
 
-# Identify significant deviations with adjusted threshold
-significant_deviations <- abs(residuals) > qnorm(1 - adjusted_threshold / 2)
+threat_all <- threat_all %>%
+  group_by(endemism_status) %>%
+  mutate(proportions = count / sum(count))
 
-# Print the cells with significant deviations
-significant_cells <- which(significant_deviations, arr.ind = TRUE)
-significant_cells
+threat_order <- c("Critically Endangered", "Endangered", "Vulnerable", "Near Threatened", "Lower Risk", "Least Concern", "Data Deficient")
 
+# Convert threat_status to a factor with the defined order
+threat_all$threat_status <- factor(threat_all$threat_status, levels = threat_order)
 
-#now the chi square, but only considering tree, shrub, herb for simplicity
-filtered <- genera %>% 
-  filter(growth_form_simp == c('tree', 'shrub', 'herb'))
+threat_bar <- ggplot(threat_all, aes(x = endemism_status, y = proportions, fill = threat_status)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Endemism Status", y = "Proportion of genera", title = "IUCN threatened status of endemic and non-endemic genera", fill = 'IUCN threatened status') +
+  theme_bw() +  
+  scale_fill_brewer(palette = "RdYlGn")
 
-#contingency table
-cont_form_f <- table(filtered$endemism_status, filtered$growth_form_simp)
+threat_bar
 
-#chi square test
-chi_f <- chisq.test(cont_form_f, correct = F)
+ggsave('threat_bar.png', threat_bar, width = 7, height = 5)
 
-
-#calculate the Pearson residuals
-residuals <- stats::residuals(chi_f, type = "pearson")
-
-#add the residuals to the contingency table for observation
-cont_form_with_residuals <- cbind(cont_form_f, residuals)
-
-#print the contingency table with residuals
-print(cont_form_with_residuals)
-#          herb shrub tree       herb     shrub      tree
-#endemic       83    86   47  0.1712374  2.750000 -2.803319
-#non-endemic  141    90  147 -0.1294433 -2.078805  2.119110
-
-#now we apply a boneferri correction 
-
-
-# Total number of cells in the contingency table
-total_cells <- length(residuals)
-
-# Bonferroni corrected significance threshold (alpha)
-alpha_bonferroni <- 0.05 / total_cells
-
-# Calculate the Bonferroni-corrected p-values
-p_values <- chi_square_test$p.value
-p_values_bonferroni <- p_values * total_cells
-
-# Identify the indices of the cells with significant residuals
-significant_cells_bonferroni <- which(abs_residuals > qnorm(1 - alpha_bonferroni / 2), arr.ind = TRUE)
-
-# Print the row and column indices of the significant cells with Bonferroni correction
-print(significant_cells_bonferroni)
-#      row col
-#shrub   2   1
-#tree    3   1
 ```
