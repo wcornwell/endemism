@@ -1,0 +1,256 @@
+---
+title: "Tree Map and Chi Squared"
+format: html
+editor: visual
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+library(tidyverse)
+
+data <- read.csv(file = "intermediate_data/summary_current.csv", header = T)
+getwd()
+treemap_data <- data %>%
+  pivot_longer(cols = Least.Concern:Extinct, names_to = "status", values_to = "count") %>%
+  select(current_knowledge, status,genus, count) %>%
+  subset(count != 0) %>%
+  filter(!(status %in% c("Extinct", "Lower.Risk.conservation.dependent", "Lower.Risk.near.threatened", "Data.Deficient")))
+
+unique(treemap_data$status)
+# Assuming treemap_data is your data frame containing the 'status' and 'current_knowledge' columns
+treemap_data <- treemap_data %>%
+  mutate(status = recode(status,
+                         "Least.Concern" = "Least Concern",
+                         "Critically.Endangered" = "Critically Endangered",
+                         "Near.Threatened" = "Near Threatened")) %>%
+  mutate(current_knowledge = recode(current_knowledge,
+                                    "non-endemic" = "Non-Endemic",
+                                    "endemic" = "Endemic"))
+
+
+
+```
+
+### Creating Tree Map
+
+```{r}
+library(highcharter)
+library(treemap)
+library(d3treeR)
+TS.treemap <- treemap(treemap_data,
+            index=c("current_knowledge","status", "genus"),
+            vSize="count",
+            vColor = "current_knowledge",
+            type="index",
+            palette = "Set1",
+            bg.labels=c("white"),
+            align.labels=list(
+              c("center", "center"), 
+              c("centre", "centre")
+            )  
+          )
+
+
+
+
+d3tree(TS.treemap, rootname = "Threatened Status of Australian Native Plant Genera")
+
+
+
+```
+
+```{r}
+# Create a nested list with the desired structure
+nested_list <- split(treemap_data, treemap_data$current_knowledge)
+
+# For each level one element (current_knowledge), split by status and create a named list
+nested_list <- lapply(nested_list, function(sub_df) {
+  status_list <- split(sub_df, sub_df$status)
+  
+  # For each status, create a named list with genus as names and count as values
+  status_list <- lapply(status_list, function(status_df) {
+    genus_list <- as.list(status_df$count)
+    names(genus_list) <- status_df$genus
+    genus_list
+  })
+  
+  status_list
+})
+
+
+```
+
+```{r}
+library(RColorBrewer)
+
+# Process data to create hierarchical structure for treemap
+points <- list()
+regionI <- 0
+
+my_colors <- brewer.pal(9, "Set1")
+
+for (endemicity in names(nested_list)) {
+  regionVal <- 0
+  regionP <- list(
+    id = paste0("id_", regionI),
+    name = endemicity,
+    color = my_colors[regionI + 1]
+  )
+  
+  countryI <- 0
+  for (status in names(nested_list[[endemicity]])) {
+    countryP <- list(
+      id = paste0(regionP$id, "_", countryI),
+      name = status,
+      parent = regionP$id
+    )
+    points[[length(points) + 1]] <- countryP
+    
+    causeI <- 0
+    for (genera in names(nested_list[[endemicity]][[status]])) {
+      causeP <- list(
+        id = paste0(countryP$id, "_", causeI),
+        name = genera,
+        parent = countryP$id,
+        value = round(as.numeric(nested_list[[endemicity]][[status]][[genera]]))
+      )
+      regionVal <- regionVal + causeP$value
+      points[[length(points) + 1]] <- causeP
+      causeI <- causeI + 1
+    }
+    countryI <- countryI + 1
+  }
+  
+  regionP$value <- round(regionVal / countryI)
+  points[[length(points) + 1]] <- regionP
+  regionI <- regionI + 1
+}
+
+# Create the treemap chart using highcharter
+treemap <- highchart() %>%
+  hc_chart(type = "treemap") %>%
+  hc_add_series(
+    type = "treemap",
+    name = "Regions",
+    layoutAlgorithm = "squarified",
+    allowDrillToNode = TRUE,
+    animationLimit = 1000,
+    dataLabels = list(
+      enabled = FALSE
+    ),
+    levels = list(
+      list(
+        level = 1,
+        dataLabels = list(
+          enabled = TRUE,
+          style = list(fontSize = "14px")
+        ),
+        borderWidth = 3,
+        borderColor = "black",  # Set the border color here (white in this example)
+        levelIsConstant = FALSE
+      )
+    ),
+    accessibility = list(exposeAsGroupOnly = TRUE),
+    data = points
+  ) %>%
+  hc_subtitle(
+    text = 'Click points to drill down. Source: IUCN Redlist',
+    align = 'left'
+  ) %>%
+  hc_title(
+    text = 'Threatened Species Status per Endemicity in Australia',
+    align = 'left'
+  )
+
+treemap
+```
+
+```{r}
+library(webshot)
+library(htmlwidgets)
+
+
+saveWidget(treemap, file = "treemap_chart.html")
+webshot::webshot(treemap, file = "treemap(ss).png", delay = 5)
+```
+
+### Chi Squared
+
+```{r}
+edited_data <- data %>%
+  select(current_knowledge, Least.Concern, Critically.Endangered, Endangered, Near.Threatened, Vulnerable) %>%
+  pivot_longer(!current_knowledge,names_to = "status", values_to = "count") %>%
+  filter(count != 0)
+
+summary_table <- edited_data %>%
+  group_by(current_knowledge, status) %>%
+  summarize(sum_count = sum(count))
+edited_data <- uncount(edited_data, count)
+
+cont_status <- table(edited_data$current_knowledge, edited_data$status)
+print(cont_status)
+
+#contingency table for threatened status
+chi <- chisq.test(cont_status, correct = F)
+
+
+# calculate the Pearson residuals
+residuals <- stats::residuals(chi, type = "pearson")
+
+# Set the significance threshold
+threshold <- 1.96
+
+# Identify significant deviations
+significant_deviations <- abs(residuals) > threshold
+
+significant_cells <- which(significant_deviations, arr.ind = TRUE)
+significant_cells
+#            row col
+#endemic       1   1
+#endemic       1   2
+#non-endemic   2   2
+#endemic       1   3
+
+# Set the significance level (alpha) before correction
+alpha <- 0.05
+
+# Calculate the adjusted significance threshold
+num_comparisons <- ncol(cont_status) - 1  # Exclude the 'Endemic' and 'Non-endemic' columns
+adjusted_threshold <- alpha / num_comparisons
+
+# Identify significant deviations with adjusted threshold
+significant_deviations <- abs(residuals) > qnorm(1 - adjusted_threshold / 2)
+
+# Print the cells with significant deviations
+significant_cells <- which(significant_deviations, arr.ind = TRUE)
+significant_cells
+
+#            row col
+#endemic       1   1
+#endemic       1   2
+#non-endemic   2   2
+#endemic       1   3
+
+
+#add the residuals to the contingency table for observation
+cont_form_with_residuals <- cbind(cont_status, residuals)
+
+#print the contingency table with residuals
+print(cont_form_with_residuals)
+
+#            Critically.Endangered Endangered Least.Concern Near.Threatened Vulnerable
+#endemic                        30         86           239              46         70
+#non-endemic                    79        201          1742             207        320
+#            Critically.Endangered Endangered Least.Concern Near.Threatened Vulnerable
+#endemic                  3.153074   6.164026     -3.980006       1.0414701  1.1764956
+#non-endemic             -1.355376  -2.649659      1.710839      -0.4476848 -0.5057266
+
+
+```
