@@ -3,43 +3,108 @@ title: "Raster_Data"
 format: html
 editor: visual
 ---
+
 Packages
+
 ```{r}
 #install.packages("raster")
 #install.packages("sf")
 library(raster)
 library(sf)
+library(terra)
+library(ggplot2)
+library(dplyr)
+library(tidyverse)
+```
+
+Extracting raster data
+
+```{r}
+mvg_raster <- raster("MVG_Raster.tif")
+freq_ecosystem<-freq(mvg_raster) #freq() function finds the area of each unique variable within the raster as a cell count
+freq_ecosystem.df <- data.frame(freq_ecosystem) #this turns it from a matrix to a data frame to make manipulation easier
+colnames(freq_ecosystem.df)[2] <- "MVG.Cell.Count" #change the name of the column as there is another data frame that has this column name as well
+print(freq_ecosystem.df)
+locations_endemic <- read.csv("locations_endemic_genera_v2.csv")
 ```
 
 Reprojecting and extracting
-```{r}
-WGS <- CRS("+proj=longlat +datum=WGS84")
-mvg_raster <- projectRaster(mvg_raster, crs = WGS, method = "ngb")
-projection(mvg_raster)
 
-coordinates_only <- locations_endemic[, c(1, 2)]
-extracted_values <- extract(mvg_raster, coordinates_only, cellnumbers = TRUE)
-locations_with_mvg <- cbind(locations_endemic, extracted_values)
-locations_with_mvg$extracted_values <- round(locations_with_mvg$extracted_values)
-unique(locations_with_mvg$MVG_Raster) #the unique values should be 1-32 and 99
+```{r}
+WGS <- CRS("+proj=longlat +datum=WGS84") #creates an object of the projection which is the same as the ALA occurrence data projection
+mvg_raster <- projectRaster(mvg_raster, crs = WGS, method = "ngb") #this reprojects the raster to the same projection as the ALA occurrence data, it uses the nearest neighbor method to reproject
+projection(mvg_raster) #this checks projection
+
+coordinates_only <- locations_endemic[, c(1, 2)] #Extract function can only take coordinates from a data frame that has the coordinates in two columns (x coordinates in the first col and y coordinates in the second col) with nothing else in the data frame
+extracted_values <- extract(mvg_raster, coordinates_only, cellnumbers = TRUE) #Extracts the raster value at each xy coord
+locations_with_mvg <- cbind(locations_endemic, extracted_values) #combines the the two separate data sets together
+unique(locations_with_mvg$MVG_Raster) #shows all the MVGs that had points in them
 ```
 
 Analysis
+
 ```{r}
-print(chisq.test(Endemic_MVG$genus, Endemic_MVG$MVG_Raster, correct = FALSE)) #There are still unclears in this dataset so need to fix those
+locations_endemic <- mutate(locations_endemic, current_knowledge = recode(current_knowledge, "unclear" = "endemic")) #changes the unclears to endemics as this list is all endemics, but some values weren't changed
+print(chisq.test(Endemic_MVG$genus, Endemic_MVG$MVG_Raster, correct = FALSE))
 ```
 
 ```{r}
-library(ggplot2)
-library(dplyr)
+ggplot(locations_with_mvg, aes(MVG_Raster, genus)) + geom_point() #don't need this, working out what variables I will need for plots
+```
 
+```{r}
 Groups <- group_by(locations_with_mvg, MVG_Raster) %>%
-  summarise(count = n())
+  summarise(count = n()) #creates a df that has the number of individual occurrences found in each MVG, need this for graphs and can be used in the chi-squared test
 print(Groups)
 
-ggplot(Groups, aes(MVG_Raster, count, color = MVG_Raster)) + 
-  geom_point() +
+Groups <- left_join(Groups, veg_community_names, by = c("MVG_Raster" = "RASTERVALUE"))
+
+ggplot(Groups, aes(Vegetation, count, color = MVG_Raster)) + 
+  geom_col() +
   theme_linedraw() +
-  scale_colour_identity()
+  scale_colour_identity() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) #the angled labels gives more room for the graph so the columns aren't squished.
+  #can visually see where the most occurrences are, can be used to reinforce the chi-squared test results
 ```
 
+Making proportions to fix scale
+
+```{r}
+Total_count <- sum(Groups$count) #Total sum of the Groups data frame, each MVG count was added together to get this, need to remove NAs so this needs to be recalculated
+#Proportion <- function(x) {
+ # result <- x/Total_count*100
+  #return(result)
+#}
+#Ignore the above code, was trying to work out how to make the proportions and was getting a bit too fancy
+
+Groups <- mutate(Groups, count.prop = count/Total_count*100) #This creates the proportions. Each values is as a percentage of the total sum, need to redo once NAs have been removed 
+
+ggplot(Groups, aes(Vegetation, count.prop, color = MVG_Raster)) + 
+  geom_col() +
+  theme_linedraw() +
+  scale_colour_identity() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))#uses the proportion so scale is more digestible
+```
+
+Analysis of MVGs scaled to determine if size effects the number of genre found in each MVG
+
+```{r}
+colnames(freq_ecosystem.df)[1] <- "MVG_Raster" #Remanes the first column to the same as that in the data set that it is being joined to
+freq_ecosystem.df <- filter(freq_ecosystem.df, MVG_Raster != "30") #MVG number 30 is not in the Groups data set that this is being joined to so need to remove it
+Groups_vmg.count <- left_join(Groups, freq_ecosystem.df, by = "MVG_Raster") #Joins the two datasets together
+Groups_vmg.count <- mutate(Groups_vmg.count, count.by.area = count/MVG.Cell.Count) #divide number of counts within each MVG by the area of that MVG and then run X2 test between this new value and endemism
+#Creates a new column that shows the number of genre found in each cell
+
+print(chisq.test(Groups_vmg.count$MVG_Raster, Groups_vmg.count$count.by.area, correct = FALSE))
+#a none significant value is wanted here to show that genre aren't just found in these MVGs because they cover the most space but because they are desired MVGs to live in
+
+#By determining how many genre occurrences per cell, we have normalised (not sure if this is correct term) the data so that larger area MVGs don't have greater weight in the analysis and that the things we are seeing are actually because these MVGs are more conducive to endemic genre growing in them.
+```
+
+```{r}
+ggplot(Groups_vmg.count, aes(x = Vegetation, y = count.by.area, colour = Vegetation)) + 
+  geom_col() +
+  theme(legend.position = "none") +
+  theme(axis.text.x = element_text(angle = 90, )) +
+  theme(axis.text.x = element_text(angle = 90, )) #Graphing provides some visual understanding of which MVG has the greatest number of genus occurrences per cell
+```
